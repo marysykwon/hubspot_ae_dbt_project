@@ -1,0 +1,12 @@
+hubspot_technical_assessment_profile:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      threads: 1
+      # path can be a file path (relative to project) or ":memory:"
+      path: "data/analytics.duckdb"
+      # optional extensions array
+      extensions: []
+      quoting:
+        identifier: true
