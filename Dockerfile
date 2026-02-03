@@ -22,7 +22,7 @@ ENV DBT_PROFILES_DIR=/app/profiles
 
 # Create profiles directory and copy example
 RUN mkdir -p /app/profiles && \
-    cp profiles.yml.example /app/profiles/profiles.yml
+    cp profiles.yml /app/profiles/profiles.yml
 
 # Default command
 CMD ["dbt", "run"]

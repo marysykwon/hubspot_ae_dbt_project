@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+*.db
+.dbt/
+target/
+.dbt_packages/
+.env
+.idea/
+.vscode/
