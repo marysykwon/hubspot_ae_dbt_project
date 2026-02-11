@@ -1,0 +1,159 @@
+version: 2
+
+models:
+  - name: stg__amenities_changelog
+    description: "Staging model for amenities changelog. Tracks historical changes to listing amenities."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: listing_id
+        data_type: integer
+        description: "Unique ID for the listing. Part of composite primary key."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg__listings')
+                field: listing_id
+      - name: change_at
+        data_type: timestamp
+        description: "Timestamp when the amenities list changed. Part of composite primary key."
+        tests:
+          - not_null
+      - name: amenities
+        data_type: varchar
+        description: "JSON array of amenities available as of the change."
+      - name: _loaded_at
+        data_type: timestamp
+        description: "Timestamp when the record was loaded into the staging model."
+
+  - name: stg__calendar
+    description: "Staging model for listing availability calendar. Contains daily availability and pricing data."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: listing_id
+        data_type: integer
+        description: "Unique ID for the listing. Part of composite primary key."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg__listings')
+                field: listing_id
+      - name: availability_date
+        data_type: date
+        description: "Date of availability. Part of composite primary key."
+        tests:
+          - not_null
+      - name: is_available
+        data_type: boolean
+        description: "Boolean indicating if the property is available on this date."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: reservation_id
+        data_type: integer
+        description: "Unique ID for the reservation on this date. Null if no reservation exists."
+      - name: rental_price_usd
+        data_type: decimal(10,2)
+        description: "Nightly price in USD for this date."
+        tests:
+          - not_null
+      - name: min_nights
+        data_type: integer
+        description: "Minimum number of consecutive nights required for booking."
+        tests:
+          - not_null
+      - name: max_nights
+        data_type: integer
+        description: "Maximum number of consecutive nights allowed for booking."
+        tests:
+          - not_null
+      - name: _loaded_at
+        data_type: timestamp
+        description: "Timestamp when the record was loaded into the staging model."
+
+  - name: stg__listings
+    description: "Staging model for listing data. Contains core information about Airbnb listings."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: listing_id
+        data_type: integer
+        description: "Unique ID for this listing. Primary key."
+        tests:
+          - unique
+          - not_null
+      - name: listing_name
+        data_type: varchar
+        description: "Display name of the listing."
+      - name: host_id
+        data_type: integer
+        description: "Unique ID for the host who owns this property."
+        tests:
+          - not_null
+      - name: host_name
+        data_type: varchar
+        description: "Display name of the host."
+      - name: host_since
+        data_type: date
+        description: "Date when the host signed up."
+      - name: host_location
+        data_type: varchar
+        description: "Location where the host is based."
+      - name: host_verifications
+        data_type: varchar
+        description: "JSON array of verification methods the host has completed."
+      - name: neighborhood
+        data_type: varchar
+        description: "Neighborhood where the listing is located."
+      - name: property_type
+        data_type: varchar
+        description: "Type of property (e.g., apartment, house)."
+      - name: room_type
+        data_type: varchar
+        description: "Type of room (e.g., entire home, private room)."
+      - name: max_guests
+        data_type: integer
+        description: "Maximum number of guests this listing can accommodate."
+      - name: num_bathrooms
+        data_type: decimal(4,1)
+        description: "Number of bathrooms available."
+      - name: bathroom_type
+        data_type: varchar
+        description: "Type of bathroom (private or shared). If null, a bathroom description was not provided."
+      - name: num_bedrooms
+        data_type: integer
+        description: "Number of bedrooms available."
+      - name: num_beds
+        data_type: integer
+        description: "Number of beds available."
+      - name: amenities
+        data_type: varchar
+        description: "JSON array of amenities available for guests."
+      - name: list_price_usd
+        data_type: decimal(10,2)
+        description: >-
+          Base nightly price in USD. The price of this listing as of the start of the date range in CALENDAR.
+        tests:
+          - not_null
+      - name: num_reviews
+        data_type: integer
+        description: "Total number of reviews received."
+      - name: first_review_date
+        data_type: date
+        description: "Date of the first review."
+      - name: last_review_date
+        data_type: date
+        description: "Date of the most recent review."
+      - name: avg_review_score_rating
+        data_type: decimal(3,2)
+        description: "Average review score rating."
+      - name: _loaded_at
+        data_type: timestamp
+        description: "Timestamp when the record was loaded into the staging model."

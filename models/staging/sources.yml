@@ -1,0 +1,9 @@
+sources:
+  - name: raw_data
+    description: Raw seed data loaded from CSV files
+    # Prefixing 'main_' to the schema is duckdb adapter specific behavior
+    schema: main_seeds
+    tables:
+      - name: AMENITIES_CHANGELOG
+      - name: CALENDAR
+      - name: LISTINGS
