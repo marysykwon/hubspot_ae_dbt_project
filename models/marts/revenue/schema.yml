@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: revenue_by_month_ac
+    description: >-
+      Monthly revenue breakdown by air conditioning availability.
+      Shows total revenue and the percentage split between listings with and without AC.
+      Uses point-in-time AC status from the amenities changelog via ASOF join
+      to determine if AC was available on the actual day of each reservation.
+      Listings without changelog coverage are treated as not having AC.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: reservation_month
+        data_type: date
+        description: "First day of the month for which revenue is aggregated."
+        tests:
+          - unique
+          - not_null
+      - name: total_revenue_by_month_usd
+        data_type: "decimal(38,2)"
+        description: "Total revenue in USD for reservations in this month."
+        tests:
+          - not_null
+      - name: pct_revenue_with_ac
+        data_type: double
+        description: "Percentage of monthly revenue from listings with air conditioning."
+        tests:
+          - not_null
+      - name: pct_revenue_without_ac
+        data_type: double
+        description: "Percentage of monthly revenue from listings without air conditioning."
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "round(pct_revenue_with_ac + pct_revenue_without_ac, 2) = 100.0"
