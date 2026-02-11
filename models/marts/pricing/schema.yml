@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: pricing_avg_neighborhood_increase
+    description: '{{ doc("pricing_avg_neighborhood_increase") }}'
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: neighborhood
+        data_type: varchar
+        description: "Neighborhood where the listing is located. Primary key."
+        tests:
+          - unique
+          - not_null
+      - name: price_start_date
+        data_type: date
+        description: "Start date for the price comparison period."
+        tests:
+          - not_null
+      - name: price_end_date
+        data_type: date
+        description: "End date for the price comparison period."
+        tests:
+          - not_null
+      - name: avg_price_on_start_date
+        data_type: double
+        description: "Average rental price across all listings in this neighborhood on the start date."
+        tests:
+          - not_null
+      - name: avg_price_on_end_date
+        data_type: double
+        description: "Average rental price across all listings in this neighborhood on the end date."
+        tests:
+          - not_null
+      - name: avg_price_increase_usd
+        data_type: double
+        description: >-
+          Dollar difference between the end date average and start date average.
+          Positive values indicate price increases, negative values indicate decreases.
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "round(avg_price_on_end_date - avg_price_on_start_date, 2) = avg_price_increase_usd"
