@@ -1,4 +1,4 @@
 # Minimal requirements for dbt + DuckDB
 # Pin versions according to your environment if needed
-dbt-core>=1.6,<2
-dbt-duckdb>=1.6,<2
+dbt-core>=1.11,<2
+dbt-duckdb>=1.10,<2

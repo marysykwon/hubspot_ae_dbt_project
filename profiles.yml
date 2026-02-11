@@ -5,7 +5,7 @@ hubspot_technical_assessment_profile:
       type: duckdb
       threads: 1
       # path can be a file path (relative to project) or ":memory:"
-      path: "data/analytics.duckdb"
+      path: "duckdb/rental_property_dev_db.duckdb"
       # optional extensions array
       extensions: []
       quoting:

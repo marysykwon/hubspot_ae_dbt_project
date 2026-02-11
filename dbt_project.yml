@@ -1,22 +1,30 @@
-name: hubspot_technical_assessment
+name: hubspot_ae_dbt_project
 version: '1.0'
 config-version: 2
 
 profile: hubspot_technical_assessment_profile
 
-source-paths: ["models"]
+model-paths: ["models"]
 macro-paths: ["macros"]
 seed-paths: ["seeds"]
 snapshot-paths: ["snapshots"]
 
 target-path: "target"
+
+# directories to be removed by 'dbt clean'
 clean-targets: ["target", "dbt_modules"]
 
 models:
-  hubspot_technical_assessment:
+  hubspot_ae_dbt_project:
     +materialized: view
+    intermediate:
+      +schema: intermediate
     staging:
       +schema: staging
     marts:
       +schema: marts
       +materialized: table
+
+seeds:
+  hubspot_ae_dbt_project:
+    +schema: seeds
