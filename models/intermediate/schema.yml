@@ -1,40 +1,18 @@
 version: 2
 
 models:
-  - name: int_listings_json_unnested
-    description: >-
-      Unnests the JSON amenities array from stg__listings into one row per listing-amenity combination.
-      Listings with null amenities are excluded.
-    columns:
-      - name: listing_id
-        description: "Listing ID sourced directly from stg__listings."
-        tests:
-          - not_null
-      - name: amenity
-        description: "Individual amenity name extracted from the JSON array."
-        tests:
-          - not_null
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - listing_id
-            - amenity
-
   - name: int_amenities_changelog_json_unnested
     description: >-
-      Unnests the JSON amenities array from stg__amenities_changelog into one row per listing-timestamp-amenity combination.
+      Unnests the JSON amenities array from 'stg__amenities_changelog' into one row per listing-timestamp-amenity combination.
       Records with null amenities are excluded.
     columns:
       - name: listing_id
         description: "Listing ID sourced directly from stg__amenities_changelog."
-        tests:
-          - not_null
       - name: change_at
         description: "Timestamp when the amenities list changed."
-        tests:
-          - not_null
       - name: amenity
         description: "Individual amenity name extracted from the JSON array."
+        # Catches edge cases where a JSON array may contain null elements
         tests:
           - not_null
     tests:

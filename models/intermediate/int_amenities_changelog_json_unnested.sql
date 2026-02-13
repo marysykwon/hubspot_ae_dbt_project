@@ -1,5 +1,6 @@
 {{
     config(
+        -- Ephemeral here is not ideal for this transformation as this model is referenced by multiple downstream models
         materialized = 'view',
     )
 }}
