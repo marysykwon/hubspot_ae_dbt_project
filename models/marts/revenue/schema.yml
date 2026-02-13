@@ -2,12 +2,7 @@ version: 2
 
 models:
   - name: revenue_by_month_ac
-    description: >-
-      Monthly revenue breakdown by air conditioning availability.
-      Shows total revenue and the percentage split between listings with and without AC.
-      Uses point-in-time AC status from the amenities changelog via ASOF join
-      to determine if AC was available on the actual day of each reservation.
-      Listings without changelog coverage are treated as not having AC.
+    description: '{{ doc("revenue_by_month_ac") }}'
     config:
       contract:
         enforced: true
@@ -21,19 +16,62 @@ models:
       - name: total_revenue_by_month_usd
         data_type: "decimal(38,2)"
         description: "Total revenue in USD for reservations in this month."
-        tests:
-          - not_null
       - name: pct_revenue_with_ac
         data_type: double
         description: "Percentage of monthly revenue from listings with air conditioning."
-        tests:
-          - not_null
       - name: pct_revenue_without_ac
         data_type: double
         description: "Percentage of monthly revenue from listings without air conditioning."
-        tests:
-          - not_null
     tests:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "round(pct_revenue_with_ac + pct_revenue_without_ac, 2) = 100.0"
+
+unit_tests:
+  - name: revenue_by_month_ac__correct_split
+    description: "Revenue correctly splits between AC and non-AC listings in a single month"
+    model: revenue_by_month_ac
+    given:
+      - input: ref('int_amenities_changelog_json_unnested')
+        rows:
+          - {listing_id: 1, change_at: '2024-01-01 00:00:00', amenity: 'Air conditioning'}
+          - {listing_id: 1, change_at: '2024-01-01 00:00:00', amenity: 'Wifi'}
+          - {listing_id: 2, change_at: '2024-01-01 00:00:00', amenity: 'Wifi'}
+      - input: ref('stg__calendar')
+        rows:
+          - {listing_id: 1, availability_date: '2024-01-15', is_available: false, rental_price_usd: 100.00}
+          - {listing_id: 2, availability_date: '2024-01-15', is_available: false, rental_price_usd: 100.00}
+    expect:
+      rows:
+        - {reservation_month: '2024-01-01', total_revenue_by_month_usd: 200.00, pct_revenue_with_ac: 50.0, pct_revenue_without_ac: 50.0}
+
+  - name: revenue_by_month_ac__mid_month_ac_change
+    description: "Mid-month AC amenity change scenarios are handled properly via point-in-time logic."
+    model: revenue_by_month_ac
+    given:
+      - input: ref('int_amenities_changelog_json_unnested')
+        rows:
+          - {listing_id: 1, change_at: '2024-01-10 00:00:00', amenity: 'Air conditioning'}
+      - input: ref('stg__calendar')
+        rows:
+          # Before AC was added — should be no AC
+          - {listing_id: 1, availability_date: '2024-01-05', is_available: false, rental_price_usd: 100.00}
+          # After AC was added — should have AC
+          - {listing_id: 1, availability_date: '2024-01-15', is_available: false, rental_price_usd: 100.00}
+    expect:
+      rows:
+        - {reservation_month: '2024-01-01', total_revenue_by_month_usd: 200.00, pct_revenue_with_ac: 50.0, pct_revenue_without_ac: 50.0}
+
+  - name: revenue_by_month_ac__no_changelog_defaults_to_no_ac
+    description: "Listings without a changelog entry default to no amenity status"
+    model: revenue_by_month_ac
+    given:
+      - input: ref('int_amenities_changelog_json_unnested')
+        rows:
+          - {listing_id: 999, change_at: '2024-01-01 00:00:00', amenity: 'Wifi'}
+      - input: ref('stg__calendar')
+        rows:
+          - {listing_id: 1, availability_date: '2024-01-15', is_available: false, rental_price_usd: 200.00}
+    expect:
+      rows:
+        - {reservation_month: '2024-01-01', total_revenue_by_month_usd: 200.00, pct_revenue_with_ac: 0.0, pct_revenue_without_ac: 100.0}

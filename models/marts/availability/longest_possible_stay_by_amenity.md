@@ -2,7 +2,7 @@
 
 ## Overview
 
-This model identifies rental listings suitable for long-term stays by guests with specific amenity requirements. It analyzes all availability windows across the full calendar date range. It also compares maximum stay limits imposed during the availability window.
+This model identifies rental listings suitable for long-term stays by guests with specific amenity requirements, Lockbox and First aid kit. It analyzes all availability windows across the full calendar date range. It also compares maximum stay limits imposed during the availability window.
 
 This model uses point-in-time amenity data from the changelog to ensure it only considers availability dates with both amenities present. Listings must have **both** amenities present in the changelog at the same point in time.
 

@@ -58,6 +58,15 @@ models:
       - name: reservation_id
         data_type: integer
         description: "Unique ID for the reservation on this date. Null if no reservation exists."
+        tests:
+          # Ensure a reservation ID exists only if the listing is marked unavailable on this date
+          # We should always have a reservation ID associated with reserved dates
+          # Note: This is a foreign key to a reservations table that is not included in this dbt project
+            # so we cannot use a relationships test here
+          - dbt_utils.expression_is_true:
+              expression: "is not null"
+              config:
+                where: "is_available = false"
       - name: rental_price_usd
         data_type: decimal(10,2)
         description: "Nightly price in USD for this date."

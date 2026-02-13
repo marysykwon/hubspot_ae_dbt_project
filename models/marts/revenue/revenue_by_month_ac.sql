@@ -4,33 +4,41 @@
     )
 }}
 
+{% set amenity = 'Air conditioning' %}
+
 -- Point-in-time AC availability from the amenities changelog.
 -- Each row represents whether a listing had AC as of a given changelog timestamp.
 with changelog_ac_status as (
     select
         listing_id
-        -- Timestamp when the amenities list changed.
         , change_at
         -- Will evaluate to true if any of the amenities at this point in time include 'Air conditioning'
-        -- Edge case: What are the expected values of each amenity type? Could there be variations like 'A/C'?
+        -- Edge cases: What are the expected values of each amenity type? Could there be variations like 'A/C'?
+        -- Should we have an accepted values test for the amenity values?
         , max(amenity = 'Air conditioning') as has_ac
     from {{ ref('int_amenities_changelog_json_unnested') }}
     group by 1, 2
 )
 
--- ASOF LEFT JOIN: for each reserved calendar day, find the most recent changelog entry
+-- For each reserved calendar day, find the most recent changelog entry
 -- to determine if AC was available on that specific date.
 -- Using LEFT join to preserve calendar rows that may not have a changelog match.
+
+-- Mid-month changes in AC availability are handled naturally since this join is at
+-- the day grain before aggregation in the final select.
 , calendar_with_ac as (
     select
         c.listing_id
         , c.availability_date
         , c.rental_price_usd
+        -- Handle null cases (no AC status entry in changlog, assume no AC)
         , coalesce(ac.has_ac, false) as has_ac
     from {{ ref('stg__calendar') }} as c
     asof left join changelog_ac_status as ac
         on c.listing_id = ac.listing_id
         and c.availability_date >= ac.change_at
+    -- Does the business want to use reservation_id instead to determine the reservation date?
+    -- Will need to ensure that reservation_id is consistently populated.
     where c.is_available = false
 )
 
