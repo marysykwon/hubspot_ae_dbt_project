@@ -1,10 +1,10 @@
 {{
     config(
-        -- Ephemeral here is not ideal for this transformation as this model is referenced by multiple downstream models
         materialized = 'view',
     )
 }}
 
+-- Materialized as view for easier dev/debugging (maybe can change to ephemeral if not re-used too many times downstream)
 select
     listing_id
     , change_at
