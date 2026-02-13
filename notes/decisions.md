@@ -1,5 +1,4 @@
-### Overview
-This dbt project uses the duckdb adapter to leverage its embedded database functionality; this allows me to run tables/views and query them locally.
+
 
 ### Areas of AI asssistance:
     - Initialization of dbt project; Prompted AI to scaffold a dbt-duckdb project
@@ -22,9 +21,6 @@ This dbt project uses the duckdb adapter to leverage its embedded database funct
 ### Sources:
 - duckdb does not have a `nullstr` config; `reservation_id` in Calendar` table to ingested as varchar to preserve raw data; nullif casting to be done in staging layer
 
-### Staging:
-
-
 ### Intermediate:
 
 - unnesting of json array done in intermediate layer; staging models should maintain same grain as source; any changes to grain is structural reshaping the dataset and belongs in the intermediate layer
@@ -43,7 +39,7 @@ This dbt project uses the duckdb adapter to leverage its embedded database funct
 ### Gaps / Inconsistencies
 -- JSON array in listings and amentities_changelog could potentially be unreliable; what do we know about the data entry process there? e.g will "Air conditioning" always have the same value or could there be variations like "A/C"?
 
--- Data Quality Issue: Relationship test cases failing where a `listing_id` from calendar table does not have a record in the listings table. 1 instance listing id `276450`
+-- Data Quality Issue: Relationship test cases failing where a `listing_id` from calendar table does not have a record in the listings table.
 
 ### Takeaways and Personal Learnings 
 
