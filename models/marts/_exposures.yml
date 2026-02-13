@@ -1,0 +1,12 @@
+exposures:
+  - name: listing_performance_report
+    type: analysis
+    description: >
+      Reporting layer enabling period-over-period analysis across
+      revenue, availability, and amenity analysis per listing.
+    depends_on:
+      - ref('revenue_by_month_ac')
+      - ref('pricing_avg_neighborhood_increase')
+      - ref('longest_possible_stay_by_amenity')
+    owner:
+      name: Mary Gonzalez
