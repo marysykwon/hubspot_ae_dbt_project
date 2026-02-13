@@ -37,7 +37,7 @@ seeds/             -- raw CSV source data (LISTINGS, CALENDAR, AMENITIES_CHANGEL
 
 1. **Clone the repo**
    ```bash
-   git clone <repo-url>
+   git clone <https://github.com/marysykwon/hubspot_ae_dbt_project.git>
    cd hubspot_ae_dbt_project
    ```
 
