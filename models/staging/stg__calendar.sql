@@ -19,7 +19,7 @@ renamed as (
                 then true
             else false
           end as is_available
-        -- Ingested as varchar due to NULL strings; nullify these values and cast to integer
+        -- Ingested as varchar due to 'NULL' strings; nullify these values and cast to integer
         , nullif("RESERVATION_ID", 'NULL')::integer as reservation_id
         -- Convert to decimal after removing $ sign
         , replace("PRICE", '$', '')::decimal(10,2) as rental_price_usd

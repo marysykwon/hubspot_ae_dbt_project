@@ -35,6 +35,7 @@ models:
           Dollar difference between the end date average and start date average.
           Positive dollar values indicate price increases, negative dollar values indicate decreases.
     tests:
+      # Serves as regression test safety net
       - dbt_utils.expression_is_true:
           arguments:
             expression: "round(avg_price_on_end_date - avg_price_on_start_date, 2) = avg_price_increase_usd"
@@ -47,9 +48,11 @@ unit_tests:
     given:
       - input: ref('stg__calendar')
         rows:
-          # Downtown: prices increase 100 → 150
+          # Downtown (2 listings): avg prices increase 125 → 175
           - {listing_id: 1, availability_date: '2021-07-12', is_available: false, rental_price_usd: 100.00}
           - {listing_id: 1, availability_date: '2022-07-11', is_available: false, rental_price_usd: 150.00}
+          - {listing_id: 4, availability_date: '2021-07-12', is_available: false, rental_price_usd: 150.00}
+          - {listing_id: 4, availability_date: '2022-07-11', is_available: false, rental_price_usd: 200.00}
           # Suburbs: prices decrease 200 → 150
           - {listing_id: 2, availability_date: '2021-07-12', is_available: false, rental_price_usd: 200.00}
           - {listing_id: 2, availability_date: '2022-07-11', is_available: false, rental_price_usd: 150.00}
@@ -59,11 +62,12 @@ unit_tests:
       - input: ref('stg__listings')
         rows:
           - {listing_id: 1, neighborhood: 'Downtown'}
+          - {listing_id: 4, neighborhood: 'Downtown'}
           - {listing_id: 2, neighborhood: 'Suburbs'}
           - {listing_id: 3, neighborhood: 'Midtown'}
     expect:
       rows:
-        - {neighborhood: 'Downtown', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 100.0, avg_price_on_end_date: 150.0, avg_price_increase_usd: 50.0}
+        - {neighborhood: 'Downtown', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 125.0, avg_price_on_end_date: 175.0, avg_price_increase_usd: 50.0}
         - {neighborhood: 'Suburbs', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 200.0, avg_price_on_end_date: 150.0, avg_price_increase_usd: -50.0}
         - {neighborhood: 'Midtown', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 125.0, avg_price_on_end_date: 125.0, avg_price_increase_usd: 0.0}
         
