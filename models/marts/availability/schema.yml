@@ -3,26 +3,36 @@ version: 2
 models:
   - name: longest_possible_stay_by_amenity
     description: '{{ doc("longest_possible_stay_by_amenity") }}'
+    config:
+      contract:
+        enforced: true
     columns:
       - name: listing_id
+        data_type: integer
         description: "Unique identifier for the rental listing."
         tests:
           - unique
           - not_null
       - name: amenity_1
+        data_type: varchar
         description: "First amenity in the filter criteria."
       - name: amenity_2
+        data_type: varchar
         description: "Second amenity in the filter criteria."
       - name: stay_start_date
+        data_type: date
         description: "Start date of the longest consecutive available window."
       - name: stay_end_date
+        data_type: date
         description: "End date of the longest consecutive available window."
       - name: longest_possible_stay_duration_days
+        data_type: integer
         description: "Longest consecutive available window in days."
         tests:
           - dbt_utils.accepted_range:
               min_value: 1
       - name: max_nights
+        data_type: integer
         description: >-
           Maximum number of consecutive nights allowed for booking during this window.
           Uses the minimum (most restrictive) value if max_nights varied during the window.
@@ -30,6 +40,7 @@ models:
           - dbt_utils.accepted_range:
               min_value: 1
       - name: exceeds_max_nights
+        data_type: boolean
         description: >-
           Boolean flag indicating whether the availability window exceeds the
           maximum nights constraint. True indicates a potentially conflicting data issue
