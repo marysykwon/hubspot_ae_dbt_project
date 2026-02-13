@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  - name: longest_possible_stay_by_amenity
+    description: '{{ doc("longest_possible_stay_by_amenity") }}'
+    columns:
+      - name: listing_id
+        description: "Unique identifier for the rental listing."
+        tests:
+          - unique
+          - not_null
+      - name: amenity_1
+        description: "First amenity in the filter criteria."
+      - name: amenity_2
+        description: "Second amenity in the filter criteria."
+      - name: stay_start_date
+        description: "Start date of the longest consecutive available window."
+      - name: stay_end_date
+        description: "End date of the longest consecutive available window."
+      - name: longest_possible_stay_duration_days
+        description: "Longest consecutive available window in days."
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: max_nights
+        description: >-
+          Maximum number of consecutive nights allowed for booking during this window.
+          Uses the minimum (most restrictive) value if max_nights varied during the window.
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: exceeds_max_nights
+        description: >-
+          Boolean flag indicating whether the availability window exceeds the
+          maximum nights constraint. True indicates a potentially conflicting data issue
+          where availability is open longer than booking rules allow and will warn if test fails.
+        tests:
+          - accepted_values:
+              values: [false]
+              config:
+                severity: warn
+
+unit_tests:
+  - name: longest_possible_stay_by_amenity__longest_window_returned
+    description: >
+      Only return the longest consecutive window.
+    model: longest_possible_stay_by_amenity
+    given:
+      - input: ref('int_amenities_changelog_json_unnested')
+        rows:
+          - {listing_id: 1, change_at: '2021-01-01', amenity: 'Lockbox'}
+          - {listing_id: 1, change_at: '2021-01-01', amenity: 'First aid kit'}
+      - input: ref('stg__calendar')
+        rows:
+          # Window 1: 3 days (Jan 1-3)
+          - {listing_id: 1, availability_date: '2021-01-01', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-02', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-03', is_available: true, max_nights: 30}
+          # Gap (Jan 4 unavailable)
+          - {listing_id: 1, availability_date: '2021-01-04', is_available: false, max_nights: 30}
+          # Window 2: 5 days (Jan 10-14) — should be selected
+          - {listing_id: 1, availability_date: '2021-01-10', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-11', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-12', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-13', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-14', is_available: true, max_nights: 30}
+    expect:
+      rows:
+        - {listing_id: 1, amenity_1: 'Lockbox', amenity_2: 'First aid kit', stay_start_date: '2021-01-10', stay_end_date: '2021-01-14', longest_possible_stay_duration_days: 5, max_nights: 30, exceeds_max_nights: false}
+
+  - name: longest_possible_stay_by_amenity__most_restrictive_max_nights_used
+    description: >
+      When 'max_nights' changes mid-window, the minimum (most restrictive) value is used.
+    model: longest_possible_stay_by_amenity
+    given:
+      - input: ref('int_amenities_changelog_json_unnested')
+        rows:
+          - {listing_id: 1, change_at: '2021-01-01', amenity: 'Lockbox'}
+          - {listing_id: 1, change_at: '2021-01-01', amenity: 'First aid kit'}
+      - input: ref('stg__calendar')
+        rows:
+          - {listing_id: 1, availability_date: '2021-01-01', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-02', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-03', is_available: true, max_nights: 10}
+          - {listing_id: 1, availability_date: '2021-01-04', is_available: true, max_nights: 10}
+    expect:
+      rows:
+        - {listing_id: 1, amenity_1: 'Lockbox', amenity_2: 'First aid kit', stay_start_date: '2021-01-01', stay_end_date: '2021-01-04', longest_possible_stay_duration_days: 4, max_nights: 10, exceeds_max_nights: false}
+
+  - name: longest_possible_stay_by_amenity__listing_with_single_amenity_excluded
+    description: >
+      A listing that has only one of the two required amenities
+      should not appear in the output.
+    model: longest_possible_stay_by_amenity
+    given:
+      - input: ref('int_amenities_changelog_json_unnested')
+        rows:
+          # Listing 1: only has Lockbox (excluded)
+          - {listing_id: 1, change_at: '2021-01-01', amenity: 'Lockbox'}
+          # Listing 2: has both (included)
+          - {listing_id: 2, change_at: '2021-01-01', amenity: 'Lockbox'}
+          - {listing_id: 2, change_at: '2021-01-01', amenity: 'First aid kit'}
+      - input: ref('stg__calendar')
+        rows:
+          - {listing_id: 1, availability_date: '2021-01-01', is_available: true, max_nights: 30}
+          - {listing_id: 1, availability_date: '2021-01-02', is_available: true, max_nights: 30}
+          - {listing_id: 2, availability_date: '2021-01-01', is_available: true, max_nights: 30}
+          - {listing_id: 2, availability_date: '2021-01-02', is_available: true, max_nights: 30}
+    expect:
+      rows:
+        - {listing_id: 2, amenity_1: 'Lockbox', amenity_2: 'First aid kit', stay_start_date: '2021-01-01', stay_end_date: '2021-01-02', longest_possible_stay_duration_days: 2, max_nights: 30, exceeds_max_nights: false}

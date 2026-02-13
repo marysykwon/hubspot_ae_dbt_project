@@ -4,6 +4,9 @@
     )
 }}
 
+-- Set the start and end dates to set the pricing comparison window.
+-- These can be adjusted as needed to analyze different time periods.
+-- If changing, ensure unit test values are also updated (see schema.yml).
 {% set start_date = '2021-07-12' %}
 {% set end_date = '2022-07-11' %}
 

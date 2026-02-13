@@ -27,9 +27,9 @@ This model uses point-in-time amenity data from the changelog to ensure it only 
 Amenities are parameterized via Jinja variables.
 To analyze different amenity combinations, update these variables at the top of the model.
 
-## Considerations
+## Additional Considerations
 
 - **Exceeds Max Nights**: When `exceeds_max_nights = true`, this means the listing has availability open for longer than its booking rules allow — a potential source configuration error. dbt test will flag this as a warning if true.
-- **Max Nights Fluctuations**: There could be instances where 'max_nights' can change mid-window. To account for such cases, we take the most restrictive constraint, but this will depend on business decision.
+- **Max Nights Fluctuations**: There could be instances where 'max_nights' can change mid-window. To account for such cases, we take the most restrictive constraint, but this can depend on business decision.
 
 {% enddocs %}

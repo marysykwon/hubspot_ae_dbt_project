@@ -21,7 +21,7 @@ The model uses point-in-time AC status from the amenities changelog to determine
 Amenity is parameterized via Jinja variable.
 To get revenue breakdown for a different amenity, update the variable at the top of the model.
 
-## Considerations
+## Additional Considerations
 
 - **Changelog Coverage**: Listings without an amenities changelog entry are assumed to not have AC.
 - **Reservations Only**: Only reserved dates with a status of `is_available = false` are included in revenue calculations. Using `reservation_id` instead to determine revenue must operate on the assumption that `reservation_id` will always be non-null for reserved dates.

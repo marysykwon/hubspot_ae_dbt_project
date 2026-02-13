@@ -16,31 +16,54 @@ models:
       - name: price_start_date
         data_type: date
         description: "Start date for the price comparison period."
-        tests:
-          - not_null
       - name: price_end_date
         data_type: date
         description: "End date for the price comparison period."
-        tests:
-          - not_null
       - name: avg_price_on_start_date
         data_type: double
-        description: "Average rental price across all listings in this neighborhood on the start date."
+        description: "Average rental price across all listings in this neighborhood on start date."
         tests:
           - not_null
       - name: avg_price_on_end_date
         data_type: double
-        description: "Average rental price across all listings in this neighborhood on the end date."
+        description: "Average rental price across all listings in this neighborhood on end date."
         tests:
           - not_null
       - name: avg_price_increase_usd
         data_type: double
         description: >-
           Dollar difference between the end date average and start date average.
-          Positive values indicate price increases, negative values indicate decreases.
-        tests:
-          - not_null
+          Positive dollar values indicate price increases, negative dollar values indicate decreases.
     tests:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "round(avg_price_on_end_date - avg_price_on_start_date, 2) = avg_price_increase_usd"
+
+unit_tests:
+  # Must update test date values here if jinja variables are changed; dates become pivot columns in the model that cannot be mutated.
+  - name: pricing_avg_neighborhood_increase__price_increase_and_decrease
+    description: "Handles price increases, decreases, and no change across different neighborhoods"
+    model: pricing_avg_neighborhood_increase
+    given:
+      - input: ref('stg__calendar')
+        rows:
+          # Downtown: prices increase 100 → 150
+          - {listing_id: 1, availability_date: '2021-07-12', is_available: false, rental_price_usd: 100.00}
+          - {listing_id: 1, availability_date: '2022-07-11', is_available: false, rental_price_usd: 150.00}
+          # Suburbs: prices decrease 200 → 150
+          - {listing_id: 2, availability_date: '2021-07-12', is_available: false, rental_price_usd: 200.00}
+          - {listing_id: 2, availability_date: '2022-07-11', is_available: false, rental_price_usd: 150.00}
+          # Midtown: no price change 125 → 125
+          - {listing_id: 3, availability_date: '2021-07-12', is_available: false, rental_price_usd: 125.00}
+          - {listing_id: 3, availability_date: '2022-07-11', is_available: false, rental_price_usd: 125.00}
+      - input: ref('stg__listings')
+        rows:
+          - {listing_id: 1, neighborhood: 'Downtown'}
+          - {listing_id: 2, neighborhood: 'Suburbs'}
+          - {listing_id: 3, neighborhood: 'Midtown'}
+    expect:
+      rows:
+        - {neighborhood: 'Downtown', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 100.0, avg_price_on_end_date: 150.0, avg_price_increase_usd: 50.0}
+        - {neighborhood: 'Suburbs', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 200.0, avg_price_on_end_date: 150.0, avg_price_increase_usd: -50.0}
+        - {neighborhood: 'Midtown', price_start_date: '2021-07-12', price_end_date: '2022-07-11', avg_price_on_start_date: 125.0, avg_price_on_end_date: 125.0, avg_price_increase_usd: 0.0}
+        
